@@ -20,7 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadSettings, resolveUrl, findVoicestudioApp } from './config.mjs';
 import { playSync, playerCommand, listDevices } from './player.mjs';
-import { toneWav, addSilence, DEFAULT_SEED, isDefaultVoice } from './lib.mjs';
+import { toneWav, addSilence, DEFAULT_SEED, isDefaultVoice, speechSeconds } from './lib.mjs';
 
 const settings = loadSettings();
 const where = resolveUrl({ settings });
@@ -85,6 +85,8 @@ async function licencesMissing() {
 async function synth({ text, voice = 'default', instruct, seed, language, speed }) {
   const req = { model: 'omnivoice', input: text, voice, response_format: 'wav' };
   if (Number(speed) >= 0.25 && Number(speed) <= 4) req.speed = Number(speed);
+  const duration = speechSeconds(text, speed);   // the readout's own estimate, or the last sound is cut
+  if (duration) req.duration = duration;
   if (typeof language === 'string' && language) req.language = language;
   if (instruct) req.instruct = instruct;
   if (seed !== undefined) req.seed = Number(seed);

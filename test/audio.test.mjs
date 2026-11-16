@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { toneWav, wavSeconds, addSilence, noiseScore } from '../scripts/lib.mjs';
+import { toneWav, wavSeconds, addSilence, noiseScore, speechSeconds } from '../scripts/lib.mjs';
 
 test('toneWav is a valid WAV of the asked length', () => {
   const w = toneWav({ ms: 500, rate: 24000 });
@@ -26,4 +26,12 @@ test('noiseScore tells a tone from hiss', () => {
 test('unreadable audio is reported, not thrown', () => {
   assert.equal(wavSeconds(Buffer.from('nope')), -1);
   assert.equal(noiseScore(Buffer.from('nope')), -1);
+});
+
+test('speechSeconds gives the take room and folds the speed in', () => {
+  const text = 'x'.repeat(160);
+  assert.equal(speechSeconds(text), 13);            // 160 / 16 * 1.3
+  assert.equal(speechSeconds(text, 2), 6.5);
+  assert.equal(speechSeconds(text, 99), 13);        // out of range: speed 1
+  assert.equal(speechSeconds('  '), undefined);     // nothing to size
 });

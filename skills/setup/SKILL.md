@@ -86,7 +86,7 @@ Ask these, one at a time, each with your recommendation. Skip what the user wave
 5. **Background sessions:** a turn the user did not start (another session, a background task) is read only when it asks them something or reports. Recommended: that (`backgroundNews: "questions"`). Alternatives: read everything (`"all"`) or nothing (`"none"`).
 6. **Speed:** play the same sentence at 1.0 and at their preferred alternative (`say --speed`) and let them choose. Default 1.0. With several voices the speed is per voice (a speed that suits one voice can sound breathless or dragging on another).
 7. **Output device:** the default output (recommended), or a named device such as headphones? `vs devices` lists names on Windows and Linux; try one with `vs tone --device "<name>"` (part of the name is enough). Answer: `outputDevice`. On macOS `afplay` cannot choose a device, so the default output plays unless they set a `playerCommand` (README). The system's default device is never changed.
-8. **Pronunciation:** words the voice says wrong (product names, abbreviations)? Play them; if one is wrong, write a phonetic spelling into `spoken`. VoiceStudio's transcription (`/v1/audio/transcriptions`) can check it: synthesize, transcribe, compare.
+8. **Pronunciation:** words the voice says wrong (product names, abbreviations)? Play them; if one is wrong, write a phonetic spelling into `spoken`. VoiceStudio's transcription (`/v1/audio/transcriptions`) can check it: synthesize, transcribe, compare. It may answer `asr_model_missing` even with the Fast pack's Whisper base installed (VoiceStudio 0.5.8 on a Mac wanted Whisper large-v3, about 3 GB, from the Model Catalogue); that download is the user's call, otherwise check by ear.
 
 ### Several voices
 
@@ -105,7 +105,7 @@ Four or five voices are plenty. Mix female and male candidates, for example `fem
 ### Own voice (optional)
 
 1. The user records a 10 to 20 second clip of their own (or a consenting person's) voice: one speaker, a quiet room, no music, natural sentences, saved as WAV.
-2. Transcribe it with VoiceStudio's transcription (`/v1/audio/transcriptions`, Whisper base from the Fast pack) and let the user correct the text.
+2. Transcribe it with VoiceStudio's transcription (`/v1/audio/transcriptions`, Whisper base from the Fast pack, or the larger Whisper it names when it answers `asr_model_missing`) and let the user correct the text; without a transcription model the user types what the clip says.
 3. `vs make-voice --name "Readout · own voice" --from "<clip.wav>" --text "<the corrected transcript>"`, then play a sentence with the new profile and ask whether it sounds right.
 
 ### Answers

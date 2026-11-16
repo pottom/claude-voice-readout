@@ -388,6 +388,20 @@ export function wavSeconds(wav) {
 // Silence appended to a WAV: players report the end slightly before the sound
 // has left the speaker, and some voices stop abruptly; without it the last
 // syllable is cut. The tail is also the pause before the next speaker.
+// OmniVoice sizes the audio from its own guess of how long the text takes,
+// and that guess runs short: the last sound of a reply (a final consonant)
+// is cut off inside the take, so no silence after it can bring it back.
+// The readout sends its own, roomier duration instead: about 16 characters a
+// second at speed 1, plus 30%. VoiceStudio then ignores speed, so the speed
+// goes into the estimate.
+export const CHARS_PER_SECOND = 16;
+export const DURATION_SLACK = 1.3;
+export function speechSeconds(text, speed = 1) {
+  const n = String(text ?? '').replace(/\s+/g, ' ').trim().length;
+  const s = Number(speed) >= 0.25 && Number(speed) <= 4 ? Number(speed) : 1;
+  return n ? Math.round((n / CHARS_PER_SECOND / s) * DURATION_SLACK * 100) / 100 : undefined;
+}
+
 export const TAIL_MS = 1000;
 export function addSilence(wav, ms = TAIL_MS) {
   const d = wavData(wav);
