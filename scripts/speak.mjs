@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS } from './lib.mjs';
+import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS, DEFAULT_SEED, isDefaultVoice } from './lib.mjs';
 import { loadSettings, resolveUrl } from './config.mjs';
 import { startPlayer } from './player.mjs';
 
@@ -28,6 +28,7 @@ async function synth(seed, text = item.text) {
   if (item.instruct) req.instruct = item.instruct;
   if (Number(item.speed) >= 0.25 && Number(item.speed) <= 4) req.speed = Number(item.speed);
   if (seed != null) req.seed = seed; else if (item.seed != null) req.seed = Number(item.seed);
+  else if (isDefaultVoice(item.voice) && !item.instruct) req.seed = DEFAULT_SEED;
   try {
     const r = await fetch(`${base}/v1/audio/speech`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req),

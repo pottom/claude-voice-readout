@@ -45,7 +45,7 @@ The plugin folder is read-only. Everything personal and every work file is in yo
 
 | Key | What | Default |
 |---|---|---|
-| `main.voice` | the voice for every session: a VoiceStudio profile id or `default` | `default` |
+| `main.voice` | the voice for every session: a VoiceStudio profile id or `default` (`default` is sent with a fixed seed, but OmniVoice can still vary it from text to text; the setup pins the voice you heard as a profile) | `default` |
 | `pool` | a voice per session: `[{ "voice", "name", "speed", "match" }]`; each new session takes the least used voice and keeps it; a voice with `match` keywords speaks for sessions whose title contains one of them | none |
 | `overviewTitle`, `overview` | a session with this title always speaks with the `overview` voice | none |
 | `language` | the language sent to VoiceStudio (`en`, `hu`, …) | VoiceStudio's default |

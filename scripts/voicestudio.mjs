@@ -20,7 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadSettings, resolveUrl, findVoicestudioApp } from './config.mjs';
 import { playSync, playerCommand, listDevices } from './player.mjs';
-import { toneWav } from './lib.mjs';
+import { toneWav, DEFAULT_SEED, isDefaultVoice } from './lib.mjs';
 
 const settings = loadSettings();
 const where = resolveUrl({ settings });
@@ -88,6 +88,7 @@ async function synth({ text, voice = 'default', instruct, seed, language, speed 
   if (typeof language === 'string' && language) req.language = language;
   if (instruct) req.instruct = instruct;
   if (seed !== undefined) req.seed = Number(seed);
+  else if (isDefaultVoice(voice) && !instruct) req.seed = DEFAULT_SEED;   // the same 'default' voice the readout uses
   const { body } = await call('/v1/audio/speech', {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req), timeout: 300000,
   });
@@ -136,7 +137,7 @@ if (cmd === 'devices') {
   const text = typeof opt.text === 'string' && opt.text.trim() ? opt.text : (SAMPLE[language] || SAMPLE.en);
   // --from <file.wav>: the take kept by `say --keep` (with its --text): the same
   // tags and seed synthesized again can sound different from what was heard.
-  const wav = typeof opt.from === 'string' ? fs.readFileSync(opt.from) : await synth({ text, voice: 'default', instruct: opt.instruct, seed: opt.seed ?? 4242, language });
+  const wav = typeof opt.from === 'string' ? fs.readFileSync(opt.from) : await synth({ text, voice: 'default', instruct: opt.instruct, seed: opt.seed ?? DEFAULT_SEED, language });
   const fd = new FormData();
   fd.set('name', opt.name);
   fd.set('kind', 'clone');

@@ -59,7 +59,9 @@ Run `vs check`.
   5. Make sure the local server runs (the app starts it; leave the app open), then `check` again. Repeat until it passes.
 - **Runs at another address:** the readout looks for the address in this order: the `VOICESTUDIO_URL` environment variable, the `url` answer, the port in the installed app's own `config/app.json`, then `http://127.0.0.1:3900` (`urlSource` says which one was used). If the app is installed somewhere unusual, the `voicestudioApp` answer names its folder; if it listens on another port, the `url` answer (local addresses only).
 
-**Sound check:** `vs say --text "Hello, can you hear me?"` (in the user's language). The first call loads the model and can take half a minute. Ask whether they heard it.
+**Sound check:** `vs say --text "<sentence>" --keep "<temp>/sound-check.wav"` (in the user's language; two or three natural sentences, so the take is also a good clone sample). The first call loads the model and can take half a minute. Ask whether they heard it.
+
+VoiceStudio's `default` voice is not one fixed voice: OmniVoice picks the speaker per request, and the readout's fixed seed only keeps it close, a new text can still sound like someone else. So the voice the user heard is pinned at once: `vs make-voice --name "Readout · voice" --from "<temp>/sound-check.wav" --text "<the same sentence>"`, add the id to `createdProfiles`, and from here on speak with `--voice <that id>` (also for the spoken questions). If they later dislike it, the voice question below replaces it.
 
 Done when they heard the voice.
 
@@ -69,7 +71,7 @@ Collect the answers in an `answers.json` in the user's temp folder (never in the
 
 **Ask aloud.** The voice works from the sound check on, so the interview is spoken: before each question, say it with `vs say`, then write it on the screen as usual (the screen stays the record; the user answers there). This way the user hears the readout while shaping it, and every answer is heard at once:
 
-- Speak with the answers so far: `--voice` (the chosen voice, or `default`), `--speed`, `--language`, `--device`. After the user picks a voice or a speed, the next question already uses it; after `address` (and `formal`), the spoken question addresses them that way.
+- Speak with the answers so far: `--voice` (the chosen voice: the profile pinned at the sound check until another is picked), `--speed`, `--language`, `--device`. After the user picks a voice or a speed, the next question already uses it; after `address` (and `formal`), the spoken question addresses them that way.
 - Keep the spoken line to the question and its recommendation, one or two short sentences, in the user's language. Synthesis can be slower than the speech itself (on a Mac often about three times), so a long line keeps the user waiting; lists of options, ids and paths stay on the screen only.
 - Auditions (speeds, voice candidates) are played as their step says; they replace the spoken question for that step.
 - If the user says they do not want it spoken, or `say` fails, carry on in writing and do not try again.
@@ -77,7 +79,7 @@ Collect the answers in an `answers.json` in the user's temp folder (never in the
 Ask these, one at a time, each with your recommendation. Skip what the user waves off.
 
 1. **One voice, or a voice per session?** Recommended: one voice. One voice: go to 1a. A voice per session: go to "Several voices".
-   - 1a. **Which voice?** VoiceStudio's built-in voice (recommended to start), one of the existing profiles from `check`, a new one designed from tags ("Designing a voice"), or their own voice ("Own voice"). Answer: `main.voice`.
+   - 1a. **Which voice?** The voice from the sound check, pinned as a profile (recommended to start; never plain `default`, which changes from reply to reply), one of the existing profiles from `check`, a new one designed from tags ("Designing a voice"), or their own voice ("Own voice"). Answer: `main.voice`.
 2. **Address:** should the readout use a name for them, and which? Recommended: no name. Answer: `address`; if they want the informal or formal form, `formal`.
 3. **Language and tone:** the voice speaks whatever language the reply is in. If they want a fixed language for the voice (`language`, such as `en` or `hu`) or a tone for the replies (`tone`, in their words), note it; the default is neither.
 4. **Length:** how long may a readout be? Recommended: about a minute (`budget` 900 characters). Longer, shorter, or the whole reply when they asked the question themselves (`fullForUserTurns: true`). When something is cut, should the voice say so (`details`, a short sentence in their language such as "More on the screen.")? Default: silent.

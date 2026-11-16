@@ -359,6 +359,12 @@ function wavData(wav) {
 }
 
 // A short, quiet beep as a 16-bit mono WAV: for trying the player without VoiceStudio.
+// VoiceStudio's 'default' voice is not one voice: without a seed (or tags)
+// OmniVoice picks a new speaker for every request. A fixed seed keeps it
+// closer to one voice; only a clone profile keeps it exactly the same.
+export const DEFAULT_SEED = 4242;
+export const isDefaultVoice = (v) => !v || v === 'default';
+
 export function toneWav({ ms = 600, hz = 660, rate = 24000, volume = 0.2 } = {}) {
   const n = Math.floor((rate * ms) / 1000);
   const b = Buffer.alloc(44 + n * 2);
