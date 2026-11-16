@@ -13,7 +13,8 @@
 // The API address, first match wins: VOICESTUDIO_URL, config.json url,
 // voices.json url, the port in the installed VoiceStudio's app.json,
 // http://127.0.0.1:3900 (see config.mjs resolveUrl).
-// Output: one JSON line on stdout; exit code 0 = ok, 2 = VoiceStudio not reachable, 1 = other error.
+// Output: one JSON line on stdout; exit code 0 = ok, 2 = VoiceStudio not reachable,
+// 3 = a model licence is not accepted in VoiceStudio (licenceRequired names them), 1 = other error.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -50,10 +51,36 @@ async function call(p, init) {
     out({ ok: false, reachable: false, url: API, urlSource: where.source, installedApp: app?.dir ?? null, error: String(e.cause?.code || e.message) }, 2);
   }
   const body = Buffer.from(await r.arrayBuffer());
-  if (!r.ok) out({ ok: false, reachable: true, status: r.status, error: body.toString('utf8').slice(0, 500) }, 1);
+  if (!r.ok) {
+    // A model whose licence was not accepted in VoiceStudio answers 403
+    // model_licence_required: name the models, so the setup can say what to accept.
+    let licence = null;
+    try { const d = JSON.parse(body.toString('utf8')).detail; if (d?.code === 'model_licence_required') licence = (d.models || []).map((m) => m.repo_id); } catch {}
+    if (licence) out({ ok: false, reachable: true, status: r.status, licenceRequired: licence, error: 'VoiceStudio: the licence of these models is not accepted; accept it in VoiceStudio\'s Model Catalogue' }, 3);
+    out({ ok: false, reachable: true, status: r.status, error: body.toString('utf8').slice(0, 500) }, 1);
+  }
   return { r, body };
 }
 const json = (b) => JSON.parse(b.toString('utf8'));
+// An optional read: null when the endpoint is missing (older VoiceStudio) or fails.
+async function probe(p) {
+  try { const r = await fetch(API + p, { redirect: 'error', signal: AbortSignal.timeout(10000) }); return r.ok ? await r.json() : null; } catch { return null; }
+}
+// The OmniVoice parts whose licence VoiceStudio wants accepted before it
+// synthesizes: the TTS models from /models, and the audio tokenizer, which
+// /models does not list.
+const OMNIVOICE_PARTS = ['eustlb/higgs-audio-v2-tokenizer'];
+async function licencesMissing() {
+  const models = (await probe('/models'))?.models;
+  if (!Array.isArray(models)) return null;   // this VoiceStudio has no licence gate
+  const repos = models.filter((m) => m.installed && (m.engines || []).includes('omnivoice')).map((m) => m.repo_id);
+  const missing = [];
+  for (const repo of [...repos, ...OMNIVOICE_PARTS]) {
+    const a = await probe(`/models/licenses/acceptance/${encodeURIComponent(repo)}`);
+    if (a?.required && !a.accepted) missing.push(repo);
+  }
+  return missing;
+}
 
 async function synth({ text, voice = 'default', instruct, seed, language, speed }) {
   const req = { model: 'omnivoice', input: text, voice, response_format: 'wav' };
@@ -87,7 +114,9 @@ if (cmd === 'devices') {
   const health = json((await call('/health')).body);
   const model = json((await call('/model/status')).body);
   const profiles = json((await call('/profiles')).body).map((p) => ({ id: p.id, name: p.name, kind: p.kind, language: p.language }));
-  out({ ok: health.status === 'ok', reachable: true, url: API, urlSource: where.source, version: health.version, device: health.device, modelLoaded: !!model.loaded, profiles });
+  const licenceRequired = (await licencesMissing()) || [];
+  const ok = health.status === 'ok' && !licenceRequired.length;
+  out({ ok, reachable: true, url: API, urlSource: where.source, version: health.version, device: health.device, modelLoaded: !!model.loaded, licenceRequired, profiles }, ok ? 0 : licenceRequired.length ? 3 : 1);
 } else if (cmd === 'say') {
   if (!opt.text) out({ ok: false, error: '--text is required' }, 1);
   const t0 = Date.now();

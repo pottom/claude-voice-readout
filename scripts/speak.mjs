@@ -34,8 +34,10 @@ async function synth(seed, text = item.text) {
       redirect: 'error',   // a redirect would carry the reply text off this machine
       signal: AbortSignal.timeout(300000),
     });
-    return r.ok ? Buffer.from(await r.arrayBuffer()) : null;
-  } catch { return null; }
+    if (r.ok) return Buffer.from(await r.arrayBuffer());
+    log(`synth-http ${r.status} ${(await r.text().catch(() => '')).slice(0, 200)}`, itemFile);
+    return null;
+  } catch (e) { log(`synth-error ${e.cause?.code || e.message}`, itemFile); return null; }
 }
 
 // The last ten takes are kept (audio and text) for when something sounds wrong.

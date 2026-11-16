@@ -43,6 +43,8 @@ Run `vs check`.
 
 **Exit code 0:** VoiceStudio answers; the output has its version, the device (GPU or CPU) and the voice profiles. On CPU the readout is slower; say so in one sentence. Go to the sound check below.
 
+**Exit code 3 (licence not accepted):** VoiceStudio answers but refuses to synthesize until the licence of the models in `licenceRequired` is accepted (OmniVoice's weights are non-commercial, and its audio tokenizer has its own terms). Accepting a licence is the user's decision and their click: never call VoiceStudio's licence endpoints yourself. Name the models and their licence in one or two sentences, ask the user to open VoiceStudio's **Model Catalogue**, review and accept them there, then `check` again. If they decline, the readout cannot speak with OmniVoice; stop here.
+
 **Exit code 2 (not reachable):** the output's `installedApp` says whether the app was found where it is normally installed (Windows: `Program Files\VoiceStudio` or `%LOCALAPPDATA%\Programs\VoiceStudio`; macOS: `/Applications/VoiceStudio.app` or `~/Applications/VoiceStudio.app`; Linux: `/opt/VoiceStudio`).
 
 - **Installed but not running:** ask the user to start it, then `check` again.
