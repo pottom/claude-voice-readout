@@ -1,6 +1,6 @@
 # voice-readout
 
-A Claude Code plugin that reads the closing message of each session aloud with a local voice ([VoiceStudio](https://voicestudio.sh), OmniVoice model). Several sessions speak one after another, never over each other. No cloud service, no account; Windows, macOS and Linux.
+A Claude Code plugin that reads the closing message of each session aloud with a local voice: [VoiceStudio](https://voicestudio.sh) (OmniVoice model) or [Piper](https://github.com/OHF-voice/piper1-gpl), your choice. Several sessions speak one after another, never over each other. No cloud service, no account; Windows, macOS and Linux.
 
 Out of the box it is plain: VoiceStudio's built-in voice reads the reply, in whatever language the reply is in, cut to about a minute. Replies to your own messages are read; turns you did not start (another session, a background task) are read only when they ask you something. Everything else is optional and set by you.
 
@@ -8,7 +8,9 @@ Out of the box it is plain: VoiceStudio's built-in voice reads the reply, in wha
 
 - Claude Code with plugin support
 - Node.js 18+ on the `PATH`
-- VoiceStudio, running, with its OmniVoice TTS (the "Fast" model pack is enough). Download: [github.com/debpalash/VoiceStudio/releases/latest](https://github.com/debpalash/VoiceStudio/releases/latest). On macOS it needs Apple Silicon.
+- One voice engine:
+  - **VoiceStudio** (the most natural voice, many voices, cloning; heavy, best with a GPU), running, with its OmniVoice TTS (the "Fast" model pack is enough). Download: [github.com/debpalash/VoiceStudio/releases/latest](https://github.com/debpalash/VoiceStudio/releases/latest). On macOS it needs Apple Silicon, where it is slow (about three times slower than the speech on an M1; long replies are read sentence by sentence).
+  - **Piper** (fast even on the CPU, about 60 MB per voice, ready-made voices only): needs Python 3; the setup installs it into the readout folder.
 - Linux only: a player (`paplay`, `pw-play`, `aplay` or `ffplay`). Windows and macOS use the system's own.
 
 ## Install
@@ -24,7 +26,7 @@ Then, in a new session (or after `/reload-plugins`):
 /voice-readout:setup
 ```
 
-The setup skill checks the player, helps you install and start VoiceStudio if it is missing (it never downloads or runs anything without your yes), and then asks a few questions, one at a time, each with a recommended default: one voice or a voice per session, how you want to be addressed (or not), how long a readout may be, whether background sessions are read, speed, output device, words the voice says wrong. What you skip stays at the default.
+The setup skill checks the player, explains the two engines and lets you choose, helps you install VoiceStudio or Piper if it is missing (it never downloads or runs anything without your yes), and then asks a few questions, one at a time, each with a recommended default: one voice or a voice per session, how you want to be addressed (or not), how long a readout may be, whether background sessions are read, speed, output device, words the voice says wrong. What you skip stays at the default.
 
 Turn it on and off with `/readout on`, `/readout off`, `/readout toggle`; `/readout status` shows the state. (If the name clashes: `/voice-readout:readout`.)
 
@@ -45,7 +47,8 @@ The plugin folder is read-only. Everything personal and every work file is in yo
 
 | Key | What | Default |
 |---|---|---|
-| `main.voice` | the voice for every session: a VoiceStudio profile id or `default` (`default` is sent with a fixed seed, but OmniVoice can still vary it from text to text; the setup pins the voice you heard as a profile) | `default` |
+| `engine` | `voicestudio` or `piper` | `voicestudio` |
+| `main.voice` | the voice for every session: a VoiceStudio profile id or `default`, or with Piper a Piper voice name such as `hu_HU-berta-medium` (`default` is sent with a fixed seed, but OmniVoice can still vary it from text to text; the setup pins the voice you heard as a profile) | `default` |
 | `pool` | a voice per session: `[{ "voice", "name", "speed", "match" }]`; each new session takes the least used voice and keeps it; a voice with `match` keywords speaks for sessions whose title contains one of them | none |
 | `overviewTitle`, `overview` | a session with this title always speaks with the `overview` voice | none |
 | `language` | the language sent to VoiceStudio (`en`, `hu`, …) | VoiceStudio's default |
@@ -73,6 +76,7 @@ The plugin folder is read-only. Everything personal and every work file is in yo
 | `url` | VoiceStudio's address; local addresses only (`127.0.0.1`, `localhost`, `[::1]`) | found automatically |
 | `voicestudioApp` | VoiceStudio's install folder, if it is not in the usual place | – |
 | `outputDevice` | play on this output device (part of its name is enough) | the system default |
+| `piperDir` | Piper's folder (`venv/`, `voices/`); keep the path short, Piper's eSpeak fails under long paths | `<readout folder>/piper` |
 | `playerCommand` | your own player: `["cmd", "arg", "{file}", "{device}"]` | – |
 
 VoiceStudio's address, first match wins: the `VOICESTUDIO_URL` environment variable, `config.json` `url`, `voices.json` `url`, the port in the installed app's own `resources/config/app.json` (Windows: `Program Files\VoiceStudio`, `%LOCALAPPDATA%\Programs\VoiceStudio`; macOS: `/Applications/VoiceStudio.app`, `~/Applications/VoiceStudio.app`; Linux: `/opt/VoiceStudio`), then `http://127.0.0.1:3900`.

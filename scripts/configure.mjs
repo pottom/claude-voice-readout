@@ -26,7 +26,8 @@ export function styleText(c = {}) {
 export function voicesJson(c) {
   const v = (x) => x && ({ voice: x.voice, ...(x.name ? { name: x.name } : {}), ...(x.instruct ? { instruct: x.instruct } : {}), ...(x.seed !== undefined ? { seed: x.seed } : {}), ...(x.speed ? { speed: x.speed } : {}), ...(x.match ? { match: x.match } : {}) });
   return {
-    _note: 'Who speaks with which voice. voice = VoiceStudio profile id (or "default"); name = how the voice introduces itself. pool: every session keeps one pool voice for its life; overview: the session whose title is overviewTitle.',
+    _note: 'Who speaks with which voice. engine: voicestudio (default) or piper. voice = VoiceStudio profile id (or "default"), or with piper a Piper voice name (hu_HU-berta-medium); name = how the voice introduces itself. pool: every session keeps one pool voice for its life; overview: the session whose title is overviewTitle.',
+    ...(c.engine === 'piper' ? { engine: 'piper' } : {}),
     ...(c.language ? { language: c.language } : {}),
     ...(c.address ? { address: c.address } : {}),
     ...(c.speed ? { speed: c.speed } : {}),
@@ -59,13 +60,14 @@ export function rulesJson(existing, c) {
 // Machine settings: config.json keeps what is already there, the answers add theirs.
 export function configJson(existing, c) {
   const out = { ...existing };
-  for (const k of ['url', 'outputDevice', 'playerCommand', 'voicestudioApp']) if (c[k] !== undefined) out[k] = c[k];
+  for (const k of ['url', 'outputDevice', 'playerCommand', 'voicestudioApp', 'piperDir']) if (c[k] !== undefined) out[k] = c[k];
   return out;
 }
 
 export function validate(c) {
   // Every reply's text goes to this address, so it must stay on this machine.
   if (c.url && !isLocalUrl(c.url)) throw new Error('config: url must be a local address (127.0.0.1, localhost or [::1])');
+  if (c.engine !== undefined && !['voicestudio', 'piper'].includes(c.engine)) throw new Error('config: engine is voicestudio or piper');
   if (c.pool !== undefined && !Array.isArray(c.pool)) throw new Error('config: pool must be a list');
   if ((c.pool ?? []).some((p) => !p?.voice)) throw new Error('config: every pool voice needs a voice id');
   if (c.backgroundNews !== undefined && !['questions', 'all', 'none'].includes(c.backgroundNews)) throw new Error('config: backgroundNews is questions, all or none');

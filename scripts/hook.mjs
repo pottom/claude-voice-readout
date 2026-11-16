@@ -54,6 +54,7 @@ async function main() {
 
   const item = {
     text: speech, voice: pick.voice?.voice, instruct: pick.voice?.instruct ?? null, seed: pick.voice?.seed ?? null, speed: pick.voice?.speed ?? voices.speed ?? null,
+    engine: voices.engine === 'piper' ? 'piper' : 'voicestudio',
     language: voices.language || null, speaker: topic, kind,
     session: input.session_id ?? null, at: Date.now(),
   };

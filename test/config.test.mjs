@@ -38,7 +38,7 @@ test('without user files the neutral defaults load', () => {
   assert.deepEqual(r._team, {});
   for (const k of ['_marks', '_report', '_fullMark', '_fullForUserTurns', '_ignoreSenders', '_titlePrefix', '_backgroundNews']) assert.equal(r[k], undefined, k);
   assert.match(loadStyle(dir), /^The voice readout is on/);
-  assert.deepEqual(loadSettings(dir), { url: null, outputDevice: '', playerCommand: null, voicestudioApp: null });
+  assert.deepEqual(loadSettings(dir), { url: null, outputDevice: '', playerCommand: null, voicestudioApp: null, piperDir: null });
 });
 
 test('an old install\'s files are read as they are', () => {
@@ -58,8 +58,8 @@ test('an old install\'s files are read as they are', () => {
 test('config.json settings win over voices.json and are checked', () => {
   const dir = tempDir();
   write(dir, 'voices.json', { url: 'http://127.0.0.1:4000' });
-  write(dir, 'config.json', { url: 'http://localhost:5000/', outputDevice: ' Headphones ', playerCommand: ['ffplay', '{file}'], voicestudioApp: '/opt/vs' });
-  assert.deepEqual(loadSettings(dir), { url: 'http://localhost:5000/', outputDevice: 'Headphones', playerCommand: ['ffplay', '{file}'], voicestudioApp: '/opt/vs' });
+  write(dir, 'config.json', { url: 'http://localhost:5000/', outputDevice: ' Headphones ', playerCommand: ['ffplay', '{file}'], voicestudioApp: '/opt/vs', piperDir: null });
+  assert.deepEqual(loadSettings(dir), { url: 'http://localhost:5000/', outputDevice: 'Headphones', playerCommand: ['ffplay', '{file}'], voicestudioApp: '/opt/vs', piperDir: null });
   write(dir, 'config.json', { playerCommand: 'ffplay' });
   assert.equal(loadSettings(dir).playerCommand, null);
 });

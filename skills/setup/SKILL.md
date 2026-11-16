@@ -1,12 +1,12 @@
 ---
 name: setup
-description: Set up the voice readout on this machine - install and check VoiceStudio, then a short guided interview that configures the readout the way the user wants (one voice or several, how they are addressed, length, speed). Writes only the user's own config files.
+description: Set up the voice readout on this machine - choose the voice engine (VoiceStudio or Piper), install and check it, then a short guided interview that configures the readout the way the user wants (one voice or several, how they are addressed, length, speed). Writes only the user's own config files.
 disable-model-invocation: true
 ---
 
 # Voice readout setup
 
-The plugin reads the closing message of each Claude Code session aloud with a local VoiceStudio voice. Out of the box it is plain: one built-in voice, no names, no openers, a length limit of about a minute. This skill gets VoiceStudio working and then interviews the user, so the readout ends up the way they want it. **Anything the user is not asked about stays at the plain default.**
+The plugin reads the closing message of each Claude Code session aloud with a local voice: VoiceStudio (OmniVoice) or Piper, the user's choice. Out of the box it is plain: one voice, no names, no openers, a length limit of about a minute. This skill lets the user choose the engine, gets it working and then interviews the user, so the readout ends up the way they want it. **Anything the user is not asked about stays at the plain default.**
 
 Rules for the whole setup:
 
@@ -14,9 +14,9 @@ Rules for the whole setup:
 - You do what can be done from this machine; from the user you need only decisions, their ears, and their hands (installing, clicking in an app).
 - **Never download or run an installer without the user's explicit yes**, and never pipe a remote install script into a shell unless they ask for exactly that.
 - You write only the user's readout folder, through `configure.mjs`. The plugin's hooks and `/readout` come from the plugin itself; `settings.json` is never touched.
-- Scripts live in `${CLAUDE_PLUGIN_ROOT}/scripts/`. Write that path out in full in every command (the Bash tool does not know the variable). `voicestudio.mjs` and `configure.mjs` print JSON; read the result from it.
+- Scripts live in `${CLAUDE_PLUGIN_ROOT}/scripts/`. Write that path out in full in every command (the Bash tool does not know the variable). `voicestudio.mjs`, `piper.mjs` and `configure.mjs` print JSON; read the result from it.
 
-Below, `vs` stands for `node "${CLAUDE_PLUGIN_ROOT}/scripts/voicestudio.mjs"` and `configure` for `node "${CLAUDE_PLUGIN_ROOT}/scripts/configure.mjs"`.
+Below, `vs` stands for `node "${CLAUDE_PLUGIN_ROOT}/scripts/voicestudio.mjs"`, `piper` for `node "${CLAUDE_PLUGIN_ROOT}/scripts/piper.mjs"` and `configure` for `node "${CLAUDE_PLUGIN_ROOT}/scripts/configure.mjs"`.
 
 ## 0. Where things stand
 
@@ -37,7 +37,16 @@ Play a short beep through the readout's player, no VoiceStudio needed: `vs tone`
 
 Done when the beep was heard.
 
-## 2. VoiceStudio
+## 2. The voice engine
+
+Explain the two engines in a few sentences, in the user's language, and let them choose. Both run on this machine; no text leaves it.
+
+- **VoiceStudio (OmniVoice):** the most natural voice, in 600+ languages; any number of voices: designed from tags, cloned from a clip, or their own voice. Heavy: a desktop app that must keep running, a model pack of about 2.7 GB, and slow without a strong GPU. On an Apple M1 a sentence takes about three times as long to make as to say, so a long reply is read sentence by sentence with pauses; on a PC with an NVIDIA GPU it is quick.
+- **Piper:** fast and light: a reply of half a minute is made in about a second, even on the CPU, and it runs only while it speaks. About 60 MB per voice, no app to keep open. The voices sound more synthetic, and only its ready-made voices exist (Hungarian, for example, has three: Anna, Berta, Imre); no designing or cloning. Needs Python 3.
+
+Recommendation: VoiceStudio if they have a GPU and want the best voice or several distinct voices; Piper if the machine is a laptop without a strong GPU (an Apple Silicon Mac included) or speed matters most. When unsure, offer to audition both. Answer: `engine` (`"piper"`; VoiceStudio is the default and needs no key). Then go to 2a or 2b.
+
+### 2a. VoiceStudio
 
 Run `vs check`.
 
@@ -65,26 +74,35 @@ VoiceStudio's `default` voice is not one fixed voice: OmniVoice picks the speake
 
 Done when they heard the voice.
 
+### 2b. Piper
+
+Run `piper check`. It lives in the readout folder (`piper/`), or where `piperDir` names. The path must stay short: Piper's bundled eSpeak cannot find its data under a path of about 160 characters (`pathOk`).
+
+- **Not installed:** Python 3 must be on the `PATH` (`python3 --version`); if not, ask the user to install it from python.org. Then, with the user's yes (it downloads the `piper-tts` package from PyPI into a virtual environment in that folder): `piper install`.
+- **Voices:** Piper's voices are listed at https://huggingface.co/rhasspy/piper-voices (the `voices.json` there lists every voice by language). Pick the ones for the user's language, in `medium` quality where there is one. With their yes, download them one by one (`piper download --voice <name>`, about 60 MB each, from that repository), and audition them: say one sentence with each (`piper say --voice <name> --text "<sentence>"`), say first which one comes. The one they like is `main.voice` (the voice name, such as `hu_HU-berta-medium`). Delete the files of the voices they do not want from `piper/voices/`.
+
+Done when they heard the voice and chose one.
+
 ## 3. The interview
 
 Collect the answers in an `answers.json` in the user's temp folder (never in the plugin folder). Every key is optional; leave out what was not asked or what keeps the default. The shape is at the end.
 
-**Ask aloud.** The voice works from the sound check on, so the interview is spoken: before each question, say it with `vs say`, then write it on the screen as usual (the screen stays the record; the user answers there). This way the user hears the readout while shaping it, and every answer is heard at once:
+**Ask aloud.** The voice works from the sound check on, so the interview is spoken: before each question, say it with `vs say` (Piper: `piper say`), then write it on the screen as usual (the screen stays the record; the user answers there). This way the user hears the readout while shaping it, and every answer is heard at once:
 
 - Speak with the answers so far: `--voice` (the chosen voice: the profile pinned at the sound check until another is picked), `--speed`, `--language`, `--device`. After the user picks a voice or a speed, the next question already uses it; after `address` (and `formal`), the spoken question addresses them that way.
-- Keep the spoken line to the question and its recommendation, one or two short sentences, in the user's language. Synthesis can be slower than the speech itself (on a Mac often about three times), so a long line keeps the user waiting; lists of options, ids and paths stay on the screen only.
+- Keep the spoken line to the question and its recommendation, one or two short sentences, in the user's language. With VoiceStudio synthesis can be slower than the speech itself (on a Mac often about three times), so a long line keeps the user waiting; lists of options, ids and paths stay on the screen only.
 - Auditions (speeds, voice candidates) are played as their step says; they replace the spoken question for that step.
 - If the user says they do not want it spoken, or `say` fails, carry on in writing and do not try again.
 
 Ask these, one at a time, each with your recommendation. Skip what the user waves off.
 
-1. **One voice, or a voice per session?** Recommended: one voice. One voice: go to 1a. A voice per session: go to "Several voices".
-   - 1a. **Which voice?** The voice from the sound check, pinned as a profile (recommended to start; never plain `default`, which changes from reply to reply), one of the existing profiles from `check`, a new one designed from tags ("Designing a voice"), or their own voice ("Own voice"). Answer: `main.voice`.
+1. **One voice, or a voice per session?** Recommended: one voice. One voice: go to 1a. A voice per session: go to "Several voices" (with Piper the pool is made of its voices for their language, each a voice name; designing and cloning are VoiceStudio only).
+   - 1a. **Which voice?** With Piper: the voice chosen in 2b. With VoiceStudio: the voice from the sound check, pinned as a profile (recommended to start; never plain `default`, which changes from reply to reply), one of the existing profiles from `check`, a new one designed from tags ("Designing a voice"), or their own voice ("Own voice"). Answer: `main.voice`.
 2. **Address:** should the readout use a name for them, and which? Recommended: no name. Answer: `address`; if they want the informal or formal form, `formal`.
 3. **Language and tone:** the voice speaks whatever language the reply is in. If they want a fixed language for the voice (`language`, such as `en` or `hu`) or a tone for the replies (`tone`, in their words), note it; the default is neither.
 4. **Length:** how long may a readout be? Recommended: about a minute (`budget` 900 characters). Longer, shorter, or the whole reply when they asked the question themselves (`fullForUserTurns: true`). When something is cut, should the voice say so (`details`, a short sentence in their language such as "More on the screen.")? Default: silent.
 5. **Background sessions:** a turn the user did not start (another session, a background task) is read only when it asks them something or reports. Recommended: that (`backgroundNews: "questions"`). Alternatives: read everything (`"all"`) or nothing (`"none"`).
-6. **Speed:** play the same sentence at 1.0 and at their preferred alternative (`say --speed`) and let them choose. Default 1.0. With several voices the speed is per voice (a speed that suits one voice can sound breathless or dragging on another).
+6. **Speed:** play the same sentence at 1.0 and at their preferred alternative (`say --speed`; with Piper too, it becomes Piper's length scale) and let them choose. Default 1.0. With several voices the speed is per voice (a speed that suits one voice can sound breathless or dragging on another).
 7. **Output device:** the default output (recommended), or a named device such as headphones? `vs devices` lists names on Windows and Linux; try one with `vs tone --device "<name>"` (part of the name is enough). Answer: `outputDevice`. On macOS `afplay` cannot choose a device, so the default output plays unless they set a `playerCommand` (README). The system's default device is never changed.
 8. **Pronunciation:** words the voice says wrong (product names, abbreviations)? Play them; if one is wrong, write a phonetic spelling into `spoken`. VoiceStudio's transcription (`/v1/audio/transcriptions`) can check it: synthesize, transcribe, compare. It may answer `asr_model_missing` even with the Fast pack's Whisper base installed (VoiceStudio 0.5.8 on a Mac wanted Whisper large-v3, about 3 GB, from the Model Catalogue); that download is the user's call, otherwise check by ear.
 
@@ -133,7 +151,7 @@ Four or five voices are plenty. Mix female and male candidates, for example `fem
 }
 ```
 
-`url`, `voicestudioApp` and `playerCommand` are only for unusual machines (README). On a rerun, `"style": "keep"` keeps a hand-tuned `style.txt`.
+With Piper add `"engine": "piper"`, and every `voice` is a Piper voice name (`"main": { "voice": "hu_HU-berta-medium" }`). `url`, `voicestudioApp`, `piperDir` and `playerCommand` are only for unusual machines (README). On a rerun, `"style": "keep"` keeps a hand-tuned `style.txt`.
 
 ## 4. Save
 
@@ -146,10 +164,10 @@ Done when the output says `"configured": true`.
 
 Ask the user to type `/readout on` (or `/voice-readout:readout on` if the short name is taken) and then ask a short question. The reply should be read aloud. If the plugin was installed in this session, the hooks load in a new session or after `/reload-plugins`.
 
-If nothing is heard: `vs check` (is VoiceStudio running?), `configure --status` (is it on, are the old hooks speaking instead?). For a log, the user sets `VOICE_READOUT_LOG` to a file path in the shell that starts Claude Code; each playback's start and end go there, and `no-player` means no player was found (Linux, step 1). The last ten takes, audio and text, stay in `work/recent/` in the readout folder.
+If nothing is heard: `vs check` (is VoiceStudio running?) or `piper check`, `configure --status` (is it on, are the old hooks speaking instead?). For a log, the user sets `VOICE_READOUT_LOG` to a file path in the shell that starts Claude Code; each playback's start and end go there, and `no-player` means no player was found (Linux, step 1). The last ten takes, audio and text, stay in `work/recent/` in the readout folder.
 
 Done when the user heard a reply.
 
 ## Removing
 
-The plugin is disabled or removed in `/plugin`. The readout folder (voices, dictionary, style) stays; deleting it is the user's choice. `configure --status` lists the profiles made during setup (`createdProfiles`); ask whether to delete them (`vs delete-voice --id`). VoiceStudio itself stays.
+The plugin is disabled or removed in `/plugin`. The readout folder (voices, dictionary, style) stays; deleting it is the user's choice. `configure --status` lists the profiles made during setup (`createdProfiles`); ask whether to delete them (`vs delete-voice --id`). VoiceStudio itself stays. Piper lives in the readout folder (`piper/`): deleting that folder removes it and its voices.

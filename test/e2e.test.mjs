@@ -129,3 +129,31 @@ test('a clone voice reads a long reply part by part, first sentence first', asyn
     assert.match(inputs.at(-1).input, /Shall I go on\?$/);
   } finally { vs.server.close(); }
 });
+
+test('with engine piper a reply is made by Piper in one piece, not by VoiceStudio', { skip: process.platform === 'win32' }, async () => {
+  const vs = await fakeVoiceStudio();
+  try {
+    const s = setup(vs.url);
+    // A stand-in Piper: reads the text from stdin, writes a tone to -f, records its arguments.
+    const pdir = path.join(s.readout, 'piper');
+    fs.mkdirSync(path.join(pdir, 'venv', 'bin'), { recursive: true });
+    fs.mkdirSync(path.join(pdir, 'voices'), { recursive: true });
+    for (const e of ['.onnx', '.onnx.json']) fs.writeFileSync(path.join(pdir, 'voices', `hu_HU-berta-medium${e}`), '{}');
+    const calls = path.join(s.readout, 'piper-calls.json');
+    const lib = path.join(repo, 'scripts', 'lib.mjs');
+    const fake = path.join(pdir, 'venv', 'bin', 'piper');
+    fs.writeFileSync(fake, `#!${process.execPath}\nconst fs = require('fs'); let t = ''; process.stdin.on('data', (c) => t += c).on('end', async () => {\n  const a = process.argv.slice(2); const { toneWav } = await import(${JSON.stringify(lib)});\n  fs.writeFileSync(a[a.indexOf('-f') + 1], toneWav({ ms: 300 }));\n  fs.appendFileSync(${JSON.stringify(calls)}, JSON.stringify({ args: a, text: t }) + '\\n'); });\n`);
+    fs.chmodSync(fake, 0o755);
+    fs.writeFileSync(path.join(s.readout, 'voices.json'), JSON.stringify({ engine: 'piper', speed: 1.25, main: { voice: 'hu_HU-berta-medium' } }));
+    spawnSync(process.execPath, [script('toggle.mjs'), 'on'], { env: s.env, encoding: 'utf8' });
+    const reply = `I checked the settings. ${'Everything else is in order and the tests pass. '.repeat(6)}Shall I go on?`;
+    assert.equal((await runHook(s.env, { session_id: 's3', last_assistant_message: reply })).code, 0);
+    const played = await waitFor(() => fs.existsSync(s.marker) && fs.readdirSync(path.join(s.readout, 'work', 'queue')).length === 0);
+    assert.ok(played, `nothing played; log:\n${fs.existsSync(s.env.VOICE_READOUT_LOG) ? fs.readFileSync(s.env.VOICE_READOUT_LOG, 'utf8') : '(none)'}`);
+    const runs = fs.readFileSync(calls, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+    assert.equal(runs.length, 1, 'one take for the whole reply');
+    assert.match(runs[0].text, /^I checked the settings\..*Shall I go on\?$/s);
+    assert.equal(runs[0].args[runs[0].args.indexOf('--length-scale') + 1], '0.8');
+    assert.ok(!vs.requests.some((q) => q.url === '/v1/audio/speech'), 'VoiceStudio is not asked');
+  } finally { vs.server.close(); }
+});

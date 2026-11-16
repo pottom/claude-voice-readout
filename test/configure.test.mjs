@@ -87,10 +87,17 @@ test('configure refuses a non-local VoiceStudio address and bad answers', () => 
   assert.throws(() => validate({ pool: [{ name: 'x' }] }), /voice id/);
   assert.throws(() => validate({ playerCommand: 'afplay' }), /playerCommand/);
   assert.throws(() => validate({ backgroundNews: 'some' }), /backgroundNews/);
+  assert.throws(() => validate({ engine: 'cloud' }), /engine/);
   validate({});
 });
 
 test('styleText: nothing to add means no style file', () => {
   assert.equal(styleText({}), null);
   assert.match(styleText({ address: 'Sam', formal: true }), /Address the user as Sam\.\nUse the formal form/);
+});
+
+test('the piper engine is written to voices.json, voicestudio stays implicit', () => {
+  assert.equal(voicesJson({ engine: 'piper', main: { voice: 'hu_HU-berta-medium' } }).engine, 'piper');
+  assert.equal(voicesJson({ engine: 'piper', main: { voice: 'hu_HU-berta-medium' } }).main.voice, 'hu_HU-berta-medium');
+  assert.equal(voicesJson({ engine: 'voicestudio' }).engine, undefined);
 });

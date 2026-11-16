@@ -1,4 +1,4 @@
-// Background speaker: synthesize one queued reply with VoiceStudio, then wait
+// Background speaker: synthesize one queued reply with VoiceStudio (or Piper), then wait
 // for its turn and play it. Replies from all sessions play one after another,
 // in the order they arrived (queue item names start with a tick count).
 import fs from 'node:fs';
@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS, DEFAULT_SEED, isDefaultVoice, TAIL_MS, speechSeconds, speechParts, CHUNK_GAP_MS } from './lib.mjs';
 import { loadSettings, resolveUrl } from './config.mjs';
 import { startPlayer } from './player.mjs';
+import { piperSynth } from './piper.mjs';
 
 const itemFile = path.resolve(process.argv[2] ?? '');
 const pidFile = `${itemFile}.pid`;
@@ -23,6 +24,7 @@ const writePids = (...pids) => fs.writeFileSync(pidFile, pids.filter(Boolean).jo
 const wanted = () => fs.existsSync(itemFile);   // gone = queue cleared (/readout off)
 
 async function synth(seed, text = item.text) {
+  if (item.engine === 'piper') return synthPiper(text);
   const req = { model: 'omnivoice', input: text, voice: item.voice, response_format: 'wav' };
   if (item.language) req.language = item.language;   // unset: VoiceStudio's own default
   if (item.instruct) req.instruct = item.instruct;
@@ -47,6 +49,18 @@ async function synth(seed, text = item.text) {
     return null;
   } catch (e) { log(`synth-error ${e.cause?.code || e.message}`, itemFile); return null; }
   finally { clearTimeout(timer); clearInterval(watch); }
+}
+
+// Piper runs on this machine, a few hundred milliseconds a take; it stops when
+// the item goes.
+async function synthPiper(text) {
+  const ctrl = new AbortController();
+  const watch = setInterval(() => { if (!wanted()) ctrl.abort(); }, 500);
+  try {
+    const wav = await piperSynth(text, { voice: item.voice, speed: item.speed, settings, dir, signal: ctrl.signal });
+    if (!wav) log('piper-failed', itemFile);
+    return wav;
+  } finally { clearInterval(watch); }
 }
 
 // The last ten takes are kept (audio and text) for when something sounds wrong.
@@ -129,7 +143,8 @@ async function main() {
   // A clone profile sounds the same in every part, so a long reply is
   // synthesized part by part and the voice starts after the first sentence.
   // The 'default' voice could change from part to part: one synthesis.
-  const parts = isDefaultVoice(item.voice) || item.instruct ? [item.text] : speechParts(item.text);
+  // Piper makes a whole reply in about a second: one piece, no seams.
+  const parts = item.engine === 'piper' || isDefaultVoice(item.voice) || item.instruct ? [item.text] : speechParts(item.text);
   // Synthesis waits for this item's turn too: VoiceStudio gets one request
   // at a time, in queue order, and news replaced while waiting is never made.
   if (!(await waitMyTurn())) return;

@@ -78,6 +78,7 @@ export function loadSettings(dir = userDir()) {
     outputDevice: typeof c.outputDevice === 'string' ? c.outputDevice.trim() : '',
     playerCommand: Array.isArray(c.playerCommand) && c.playerCommand.length && c.playerCommand.every((x) => typeof x === 'string') ? c.playerCommand : null,
     voicestudioApp: c.voicestudioApp ?? null,
+    piperDir: typeof c.piperDir === 'string' && c.piperDir ? c.piperDir : null,
   };
 }
 
