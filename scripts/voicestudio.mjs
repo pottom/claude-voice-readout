@@ -20,7 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadSettings, resolveUrl, findVoicestudioApp } from './config.mjs';
 import { playSync, playerCommand, listDevices } from './player.mjs';
-import { toneWav, DEFAULT_SEED, isDefaultVoice } from './lib.mjs';
+import { toneWav, addSilence, DEFAULT_SEED, isDefaultVoice } from './lib.mjs';
 
 const settings = loadSettings();
 const where = resolveUrl({ settings });
@@ -125,7 +125,7 @@ if (cmd === 'devices') {
   const seconds = (Date.now() - t0) / 1000;
   // --keep <file.wav>: the take is kept, so make-voice --from can clone exactly what was heard.
   if (typeof opt.keep === 'string') fs.writeFileSync(opt.keep, wav);
-  const played = playTemp(wav);
+  const played = playTemp(addSilence(wav));   // the same tail the readout plays, or the last syllable is cut
   out({ ok: true, played, synthSeconds: seconds, bytes: wav.length, kept: typeof opt.keep === 'string' ? opt.keep : null });
 } else if (cmd === 'make-voice') {
   if (!opt.name || !(opt.instruct || typeof opt.from === 'string')) out({ ok: false, error: '--name and --instruct (or --from) are required' }, 1);

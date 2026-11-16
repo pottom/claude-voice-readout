@@ -388,7 +388,8 @@ export function wavSeconds(wav) {
 // Silence appended to a WAV: players report the end slightly before the sound
 // has left the speaker, and some voices stop abruptly; without it the last
 // syllable is cut. The tail is also the pause before the next speaker.
-export function addSilence(wav, ms) {
+export const TAIL_MS = 1000;
+export function addSilence(wav, ms = TAIL_MS) {
   const d = wavData(wav);
   if (!d || d.rate > 384000 || d.align > 32) return wav;
   const pad = Math.floor((d.rate * ms) / 1000) * d.align;

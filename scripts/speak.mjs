@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS, DEFAULT_SEED, isDefaultVoice } from './lib.mjs';
+import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS, DEFAULT_SEED, isDefaultVoice, TAIL_MS } from './lib.mjs';
 import { loadSettings, resolveUrl } from './config.mjs';
 import { startPlayer } from './player.mjs';
 
@@ -126,7 +126,7 @@ async function main() {
   if (item.at && Date.now() - item.at > SAY_MAX_AGE_MS) { log('too-old', itemFile); return; }
   fs.writeFileSync(playingFile, '');   // from here on a newer item does not replace this one
   log(`start ${item.speaker}`, itemFile);
-  await play(addSilence(audio, 1000));
+  await play(addSilence(audio, TAIL_MS));
   log('end', itemFile);
 }
 
