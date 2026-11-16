@@ -111,3 +111,21 @@ test('/readout: on, off, toggle and status', () => {
   assert.equal(t(), 'Voice readout: ON');
   assert.match(t('status'), /^Voice readout: ON \(usage/);
 });
+
+test('a clone voice reads a long reply part by part, first sentence first', async () => {
+  const vs = await fakeVoiceStudio();
+  try {
+    const s = setup(vs.url);
+    fs.writeFileSync(path.join(s.readout, 'voices.json'), JSON.stringify({ main: { voice: 'p1' } }));
+    spawnSync(process.execPath, [script('toggle.mjs'), 'on'], { env: s.env, encoding: 'utf8' });
+    const reply = `I checked the settings. ${'Everything else is in order and the tests pass. '.repeat(6)}Shall I go on?`;
+    const r = await runHook(s.env, { session_id: 's2', last_assistant_message: reply });
+    assert.equal(r.code, 0);
+    await waitFor(() => fs.readdirSync(path.join(s.readout, 'work', 'queue')).length === 0 && fs.existsSync(s.marker));
+    const inputs = vs.requests.filter((q) => q.url === '/v1/audio/speech').map((q) => JSON.parse(q.body));
+    assert.ok(inputs.length >= 2, `expected several parts, got ${inputs.length}`);
+    assert.equal(inputs[0].input, 'I checked the settings.');
+    assert.ok(inputs.every((q) => q.voice === 'p1'));
+    assert.match(inputs.at(-1).input, /Shall I go on\?$/);
+  } finally { vs.server.close(); }
+});

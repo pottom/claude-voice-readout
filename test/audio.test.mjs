@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { toneWav, wavSeconds, addSilence, noiseScore, speechSeconds } from '../scripts/lib.mjs';
+import { toneWav, wavSeconds, addSilence, noiseScore, speechSeconds, speechParts } from '../scripts/lib.mjs';
 
 test('toneWav is a valid WAV of the asked length', () => {
   const w = toneWav({ ms: 500, rate: 24000 });
@@ -34,4 +34,13 @@ test('speechSeconds gives the take room and folds the speed in', () => {
   assert.equal(speechSeconds(text, 2), 6.5);
   assert.equal(speechSeconds(text, 99), 13);        // out of range: speed 1
   assert.equal(speechSeconds('  '), undefined);     // nothing to size
+});
+
+test('speechParts starts with one sentence and groups the rest', () => {
+  const t = 'Kész vagyok. A tempó 1.25 lett, a verzió v0.1.1. Minden teszt zöld! Mehetünk tovább? Szólj.';
+  assert.deepEqual(speechParts(t, 60), ['Kész vagyok.', 'A tempó 1.25 lett, a verzió v0.1.1. Minden teszt zöld!', 'Mehetünk tovább? Szólj.']);
+  assert.deepEqual(speechParts('Egy mondat pont nélkül'), ['Egy mondat pont nélkül']);
+  assert.deepEqual(speechParts('  '), []);
+  const long = 'x'.repeat(400) + '. Vége.';
+  assert.deepEqual(speechParts(long, 250), ['x'.repeat(400) + '.', 'Vége.']);   // a long sentence stays whole
 });

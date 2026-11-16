@@ -402,6 +402,28 @@ export function speechSeconds(text, speed = 1) {
   return n ? Math.round((n / CHARS_PER_SECOND / s) * DURATION_SLACK * 100) / 100 : undefined;
 }
 
+// A long reply is synthesized in parts, so the voice starts after the first
+// sentence instead of after the whole reply (synthesis can be several times
+// slower than the speech). The first part is one sentence, the rest are
+// whole sentences, short ones grouped up to about CHUNK_CHARS. Only for a clone profile:
+// with the 'default' voice every part could be another speaker.
+export const CHUNK_CHARS = 120;
+export const CHUNK_GAP_MS = 150;
+export function speechParts(text, max = CHUNK_CHARS) {
+  const t = String(text ?? '').replace(/\s+/g, ' ').trim();
+  if (!t) return [];
+  // A sentence ends at . ! ? … (and closing quotes) followed by a space,
+  // so 1.25 or v0.1.1 stay whole.
+  const sentences = t.split(/(?<=[.!?…]["'”»)]*)\s+/).filter(Boolean);
+  const parts = [sentences.shift()];
+  for (const s of sentences) {
+    const last = parts.length - 1;
+    if (last > 0 && parts[last].length + 1 + s.length <= max) parts[last] += ` ${s}`;
+    else parts.push(s);
+  }
+  return parts;
+}
+
 export const TAIL_MS = 1000;
 export function addSilence(wav, ms = TAIL_MS) {
   const d = wavData(wav);

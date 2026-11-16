@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS, DEFAULT_SEED, isDefaultVoice, TAIL_MS, speechSeconds } from './lib.mjs';
+import { dir, work, queue, recent, readJson, log, alive, freshFile, lock, unlock, sleep, addSilence, noiseScore, wavSeconds, SAY_MAX_AGE_MS, DEFAULT_SEED, isDefaultVoice, TAIL_MS, speechSeconds, speechParts, CHUNK_GAP_MS } from './lib.mjs';
 import { loadSettings, resolveUrl } from './config.mjs';
 import { startPlayer } from './player.mjs';
 
@@ -119,16 +119,25 @@ function play(wav) {
 async function main() {
   writePids(process.pid);
   item = readJson(itemFile);
-  // The whole reply in one synthesis: a voice with no seams.
-  const audio = await checkedAudio();
+  // A clone profile sounds the same in every part, so a long reply is
+  // synthesized part by part and the voice starts after the first sentence.
+  // The 'default' voice could change from part to part: one synthesis.
+  const parts = isDefaultVoice(item.voice) || item.instruct ? [item.text] : speechParts(item.text);
+  let audio = await checkedAudio(parts[0]);
   if (!audio || !(await waitMyTurn())) return;
   locked = await lock(playLock, 20 * 60 * 1000, wanted);   // only one speaker plays at a time
   if (!locked || !wanted()) return;
   // News that waited too long is stale: the screen has moved on.
   if (item.at && Date.now() - item.at > SAY_MAX_AGE_MS) { log('too-old', itemFile); return; }
   fs.writeFileSync(playingFile, '');   // from here on a newer item does not replace this one
-  log(`start ${item.speaker}`, itemFile);
-  await play(addSilence(audio, TAIL_MS));
+  log(`start ${item.speaker}${parts.length > 1 ? ` (${parts.length} parts)` : ''}`, itemFile);
+  for (let i = 0; i < parts.length; i++) {
+    const last = i === parts.length - 1;
+    const next = last ? null : checkedAudio(parts[i + 1]);   // synthesized while this part plays
+    if (audio) await play(addSilence(audio, last ? TAIL_MS : CHUNK_GAP_MS));
+    if (!wanted()) { if (next) await next.catch(() => null); break; }   // /readout off
+    if (next) audio = await next;
+  }
   log('end', itemFile);
 }
 
