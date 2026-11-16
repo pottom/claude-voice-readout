@@ -67,6 +67,13 @@ Done when they heard the voice.
 
 Collect the answers in an `answers.json` in the user's temp folder (never in the plugin folder). Every key is optional; leave out what was not asked or what keeps the default. The shape is at the end.
 
+**Ask aloud.** The voice works from the sound check on, so the interview is spoken: before each question, say it with `vs say`, then write it on the screen as usual (the screen stays the record; the user answers there). This way the user hears the readout while shaping it, and every answer is heard at once:
+
+- Speak with the answers so far: `--voice` (the chosen voice, or `default`), `--speed`, `--language`, `--device`. After the user picks a voice or a speed, the next question already uses it; after `address` (and `formal`), the spoken question addresses them that way.
+- Keep the spoken line to the question and its recommendation, one or two short sentences, in the user's language. Synthesis can be slower than the speech itself (on a Mac often about three times), so a long line keeps the user waiting; lists of options, ids and paths stay on the screen only.
+- Auditions (speeds, voice candidates) are played as their step says; they replace the spoken question for that step.
+- If the user says they do not want it spoken, or `say` fails, carry on in writing and do not try again.
+
 Ask these, one at a time, each with your recommendation. Skip what the user waves off.
 
 1. **One voice, or a voice per session?** Recommended: one voice. One voice: go to 1a. A voice per session: go to "Several voices".
