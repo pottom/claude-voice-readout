@@ -1,7 +1,7 @@
 {
   "name": "voice-readout",
   "displayName": "Voice readout",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Reads Claude Code's closing messages aloud with a local VoiceStudio voice. Plain by default; optional per-session voices, names and a pronunciation dictionary.",
   "author": { "name": "voice-readout contributors" },
   "keywords": ["tts", "voice", "readout", "voicestudio", "accessibility"]

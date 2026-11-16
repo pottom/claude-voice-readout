@@ -10,6 +10,7 @@ The plugin reads the closing message of each Claude Code session aloud with a lo
 
 Rules for the whole setup:
 
+- **The engine is the user's choice.** Step 2 explains VoiceStudio and Piper and asks which one they want. Do not check, install or recommend installing VoiceStudio (or Piper) before they have chosen; on a fresh machine neither is expected to be there.
 - Speak the user's language. **One question at a time**, each with a recommended default; wait for the answer.
 - You do what can be done from this machine; from the user you need only decisions, their ears, and their hands (installing, clicking in an app).
 - **Never download or run an installer without the user's explicit yes**, and never pipe a remote install script into a shell unless they ask for exactly that.
@@ -23,6 +24,7 @@ Below, `vs` stands for `node "${CLAUDE_PLUGIN_ROOT}/scripts/voicestudio.mjs"`, `
 Run `configure --status`.
 
 - `"legacyInstallActive": true`: an earlier standalone install still has its own hooks in `settings.json`. While they are there the plugin stays silent (otherwise every reply would be read twice) and the old install speaks. Its data is in the same folder and the plugin reads it, so nothing has to be set up again. Removing the old hooks is the user's step (README, "Moving from the standalone install"); tell them in one sentence and carry on only if they want to.
+- `engine`, `engineChosen`: which engine the existing setup uses; `piper` says whether Piper and which voices are installed. A fresh machine has `engineChosen: false`: the choice comes in step 2.
 - `"configured": true`: there is a setup already. Ask what they want to change and go through only that step; the earlier answers are in `answers.json` in the readout folder.
 
 ## 1. The machine

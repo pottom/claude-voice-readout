@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { userDir, readJson, isLocalUrl, loadSettings, resolveUrl, legacyInstallActive } from './config.mjs';
+import { piperPaths, installedVoices } from './piper.mjs';
 
 // The spoken style: only when the answers ask for something beyond the default.
 export function styleText(c = {}) {
@@ -84,6 +85,10 @@ function main(args) {
     const settings = loadSettings(dir);
     console.log(JSON.stringify({
       readoutDir: dir, on: fs.existsSync(path.join(dir, 'on')), configured: fs.existsSync(path.join(dir, 'voices.json')),
+      // The engine is the user's choice (setup step 2): voicestudio until they pick piper.
+      engine: readOr('voices.json', {}).engine === 'piper' ? 'piper' : 'voicestudio',
+      engineChosen: readOr('voices.json', null) !== null,
+      piper: (() => { const p = piperPaths(settings, dir); return { installed: fs.existsSync(p.exe), dir: p.root, voices: installedVoices(p) }; })(),
       voicestudio: resolveUrl({ settings }), outputDevice: settings.outputDevice || null,
       createdProfiles: readOr('voices.json', {}).createdProfiles ?? [], legacyInstallActive: legacyInstallActive(),
     }, null, 2));
