@@ -1,0 +1,28 @@
+{
+  "_note": "Test fixture: voices.json as the earlier standalone installer wrote it.",
+  "language": "hu",
+  "address": "Sam",
+  "overviewTitle": "Lead",
+  "overviewAliases": [
+    "Old lead"
+  ],
+  "overview": {
+    "voice": "ov1",
+    "name": "Lead"
+  },
+  "pool": [
+    {
+      "voice": "pv1",
+      "name": "Anna",
+      "speed": 1.1
+    },
+    {
+      "voice": "pv2",
+      "name": "Bence"
+    }
+  ],
+  "createdProfiles": [
+    "ov1",
+    "pv1"
+  ]
+}

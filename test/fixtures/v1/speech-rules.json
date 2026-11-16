@@ -1,0 +1,168 @@
+{
+  "_note": "Test fixture: a rules file as the earlier standalone installer wrote it (full copy of its phrasing, one named voice).",
+  "_budget": 600,
+  "_details": "A részletek a képernyőn.",
+  "Kész": {
+    "empty": "Még semmi nem készült el.",
+    "prefix": ""
+  },
+  "Fut": {
+    "empty": "",
+    "prefix": ""
+  },
+  "PR": {
+    "empty": "",
+    "prefix": "A PR "
+  },
+  "Tőled": {
+    "empty": "Tőled most nem kell semmi.",
+    "prefix": ""
+  },
+  "_spoken": {
+    "CI": "szí-áj",
+    "e2e": "end-tu-end",
+    "E2E": "end-tu-end",
+    "WSL": "vé-es-el",
+    "PR-ok": "pul rikvesztek",
+    "PR-t": "pul rikvesztet",
+    "PR-ja": "pul rikvesztje",
+    "PR-ját": "pul rikvesztjét",
+    "PR-jára": "pul rikvesztjére",
+    "PR-jában": "pul rikvesztjében",
+    "PR-on": "pul rikveszten",
+    "PR-ra": "pul rikvesztre",
+    "PR-ba": "pul rikvesztbe",
+    "PR-ban": "pul rikvesztben",
+    "PR-ből": "pul rikvesztből",
+    "PR-hez": "pul rikveszthez",
+    "PR-nél": "pul rikvesztnél",
+    "PR-je": "pul rikvesztje",
+    "PR": "pul rikveszt",
+    "VR": "vé-er",
+    "API": "á-pé-í",
+    "SSL": "es-es-el",
+    "GDPR": "gé-dé-pé-er",
+    "TTS": "té-té-es",
+    "USB": "ú-es-bé",
+    "HTML": "há-té-em-el",
+    "CLI": "cé-el-í",
+    "GB": "gigabájt",
+    "MCP": "em-cé-pé",
+    "UTC": "ú-té-cé",
+    "EULA": "júla",
+    "DMARC": "dé-mark",
+    "RTX": "er-té-iksz",
+    "VRAM": "vé-ram"
+  },
+  "_words": {
+    "Draft": "piszkozat",
+    "Open": "nyitott",
+    "Merged": "beolvadt",
+    "Closed": "lezárt"
+  },
+  "_team": {
+    "_default": {
+      "first": [
+        "Szia {h}, {n} vagyok, én viszem {a} {t} ügyét."
+      ],
+      "first_notopic": [
+        "Szia {h}, {n} vagyok."
+      ],
+      "short": {
+        "question": "Akadt egy kérdésem.",
+        "approval": "Megvagyok vele, csak a jóváhagyásodra vár.",
+        "blocked": "Elakadtam vele, kéne a segítséged.",
+        "done": "Kész, beolvadt.",
+        "info": "",
+        "plain": ""
+      },
+      "question": [
+        "{h}, van egy perced? {A} {t} kapcsán akadt egy kérdésem.",
+        "{h}, {a} {t} ügyében kéne egy döntésed."
+      ],
+      "approval": [
+        "{h}, megvagyok {a} {t} ügyével, csak a jóváhagyásodra vár.",
+        "{A} {t} ügye kész, {h}, már csak a jóváhagyásod hiányzik."
+      ],
+      "blocked": [
+        "{h}, elakadtam {a} {t} ügyével, kéne a segítséged.",
+        "{h}, {a} {t} ügyében nem tudok továbblépni nélküled."
+      ],
+      "done": [
+        "{A} {t} ügye kész, beolvadt.",
+        "{h}, lezártam {a} {t} ügyét, beolvadt."
+      ],
+      "info": [
+        "{h}, egy rövid hír {a} {t} ügyéből.",
+        "{A} {t} ügyében haladok, {h}."
+      ],
+      "plain": [
+        ""
+      ],
+      "question_notopic": [
+        "{h}, van egy perced? Akadt egy kérdésem."
+      ],
+      "approval_notopic": [
+        "{h}, megvagyok, csak a jóváhagyásodra vár."
+      ],
+      "blocked_notopic": [
+        "{h}, elakadtam, kéne a segítséged."
+      ],
+      "done_notopic": [
+        "Kész, beolvadt."
+      ],
+      "info_notopic": [
+        "{h}, egy rövid hír."
+      ],
+      "plain_notopic": [
+        ""
+      ]
+    },
+    "_overview": {
+      "question": [
+        "{h}, {a} {t} ügyében kérdés vár rád."
+      ],
+      "approval": [
+        "{h}, {a} {t} ügye a jóváhagyásodra vár."
+      ],
+      "blocked": [
+        "{h}, {a} {t} ügye elakadt."
+      ],
+      "done": [
+        "{A} {t} ügye kész, beolvadt."
+      ],
+      "info": [
+        "Hír {a} {t} ügyéből."
+      ],
+      "plain": [
+        ""
+      ],
+      "question_notopic": [
+        "{h}, kérdésem van."
+      ],
+      "approval_notopic": [
+        "{h}, valami a jóváhagyásodra vár."
+      ],
+      "blocked_notopic": [
+        "{h}, elakadt valami."
+      ],
+      "done_notopic": [
+        ""
+      ],
+      "info_notopic": [
+        ""
+      ],
+      "plain_notopic": [
+        ""
+      ]
+    },
+    "Anna": {
+      "first": [
+        "Szia {h}, Anna vagyok, én viszem {a} {t} ügyét."
+      ],
+      "question": [
+        "{h}, {a} {t} kapcsán kérdésem van."
+      ]
+    }
+  }
+}

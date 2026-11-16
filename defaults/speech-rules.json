@@ -1,0 +1,13 @@
+{
+  "_note": "Plugin defaults: plain readout. The speech-rules.json in the user folder goes over this file: _spoken and _words are added to these, _team is merged voice by voice, any other key replaces the default. See the README for the optional keys (_team, _marks, _report, _fullMark, _fullForUserTurns, _titlePrefix, _ignoreSenders, table-label rules).",
+  "_budget": 900,
+  "_details": "",
+  "_spoken": {
+    "e2e": "end-to-end",
+    "E2E": "end-to-end",
+    "PRs": "pull requests",
+    "PR": "pull request"
+  },
+  "_words": {},
+  "_team": {}
+}

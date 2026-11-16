@@ -1,0 +1,1 @@
+The voice readout is on: your closing message is read aloud to the user, in whatever language you write it. Write it so it reads well aloud: short sentences, the main point first, little code, few paths and links. Keep tables short; their cells are read one after another.

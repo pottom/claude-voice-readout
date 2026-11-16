@@ -1,0 +1,12 @@
+{
+  "name": "voice-readout",
+  "description": "Marketplace for the voice-readout plugin; this repository is the plugin itself.",
+  "owner": { "name": "voice-readout contributors" },
+  "plugins": [
+    {
+      "name": "voice-readout",
+      "source": "./",
+      "description": "Reads Claude Code's closing messages aloud with a local VoiceStudio voice."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "_note": "Plugin default: every session speaks with VoiceStudio's built-in voice, in VoiceStudio's default language, nobody addressed by name. A voices.json in the user folder replaces these keys.",
+  "main": { "voice": "default" },
+  "pool": [],
+  "overviewTitle": "",
+  "createdProfiles": []
+}

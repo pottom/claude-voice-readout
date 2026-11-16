@@ -1,0 +1,11 @@
+{
+  "name": "voice-readout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin: final replies read aloud by a local VoiceStudio voice",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test"
+  }
+}
