@@ -31,16 +31,22 @@ async function synth(seed, text = item.text) {
   if (duration) req.duration = duration;
   if (seed != null) req.seed = seed; else if (item.seed != null) req.seed = Number(item.seed);
   else if (isDefaultVoice(item.voice) && !item.instruct) req.seed = DEFAULT_SEED;
+  // Given up when the item goes (replaced by newer news, /readout off), so a
+  // stale reply does not keep VoiceStudio busy, or after five minutes.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 300000);
+  const watch = setInterval(() => { if (!wanted()) ctrl.abort(); }, 500);
   try {
     const r = await fetch(`${base}/v1/audio/speech`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req),
       redirect: 'error',   // a redirect would carry the reply text off this machine
-      signal: AbortSignal.timeout(300000),
+      signal: ctrl.signal,
     });
     if (r.ok) return Buffer.from(await r.arrayBuffer());
     log(`synth-http ${r.status} ${(await r.text().catch(() => '')).slice(0, 200)}`, itemFile);
     return null;
   } catch (e) { log(`synth-error ${e.cause?.code || e.message}`, itemFile); return null; }
+  finally { clearTimeout(timer); clearInterval(watch); }
 }
 
 // The last ten takes are kept (audio and text) for when something sounds wrong.
@@ -61,6 +67,7 @@ function saveRecent(wav, verdict, score) {
 async function checkedAudio(text = item.text) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     const wav = await synth(attempt > 1 ? crypto.randomInt(1, 1000000) : null, text);
+    if (!wanted()) return null;
     if (!wav) { log(`synth-failed try ${attempt}`, itemFile); saveRecent(null, 'failed', -1); await sleep(800); continue; }
     const score = noiseScore(wav);
     if (score > 0.25) { log(`noise ${score.toFixed(3)} try ${attempt}`, itemFile); saveRecent(wav, 'noise', score); continue; }
@@ -123,8 +130,11 @@ async function main() {
   // synthesized part by part and the voice starts after the first sentence.
   // The 'default' voice could change from part to part: one synthesis.
   const parts = isDefaultVoice(item.voice) || item.instruct ? [item.text] : speechParts(item.text);
+  // Synthesis waits for this item's turn too: VoiceStudio gets one request
+  // at a time, in queue order, and news replaced while waiting is never made.
+  if (!(await waitMyTurn())) return;
   let audio = await checkedAudio(parts[0]);
-  if (!audio || !(await waitMyTurn())) return;
+  if (!audio || !wanted()) return;
   locked = await lock(playLock, 20 * 60 * 1000, wanted);   // only one speaker plays at a time
   if (!locked || !wanted()) return;
   // News that waited too long is stale: the screen has moved on.
